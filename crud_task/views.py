@@ -7,19 +7,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .forms import TaskForm
 from rest_framework import status
-
+from rest_framework.views import APIView
     
 def homepage(req):
     return render(req,'homepage.html')
 
 
-from django.shortcuts import render, redirect
-from .models import tasktable
-from .serializers import tasktableSerializer
-from .forms import TaskForm
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-
+ 
+'''     
 @api_view(['POST', 'GET','DELETE'])
 def createtask(request):
     if request.method == 'GET':
@@ -37,10 +32,29 @@ def createtask(request):
         
     elif request.method=='DELETE':
         alldata=tasktable.objects.all().delete()
-        return  Response({"all data deleted ssuccesfully "},status=status.HTTP_400_BAD_REQUEST)
-        
- 
+        return  Response({"all data deleted ssuccesfully "},status=status.HTTP_400_BAD_REQUEST) '''
 
+class createtask(APIView):
+    serializer_class = tasktableSerializer
+
+    def get(self, request):
+        tasks = tasktable.objects.all()
+        serializer = tasktableSerializer(tasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = tasktableSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        tasktable.objects.all().delete()
+        return Response({"all data deleted successfully"}, status=status.HTTP_200_OK)
+  
+ 
+'''   
 @api_view(['GET', 'PUT','DELETE'])
 def update_task(request, pk):
     taskinstance = get_object_or_404(tasktable, pk=pk)
@@ -61,3 +75,27 @@ def update_task(request, pk):
         return Response({"data deleted succefully {count[0]}"},status=status.HTTP_204_NO_CONTENT)
  
 
+ '''
+class update_task(APIView):
+    serializer_class = tasktableSerializer
+    
+    def get(self, request, pk):
+        task_instance = get_object_or_404(tasktable, pk=pk)
+        serializer = tasktableSerializer(task_instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        task_instance = get_object_or_404(tasktable, pk=pk)
+        serializer = tasktableSerializer(task_instance, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        task_instance = get_object_or_404(tasktable, pk=pk)
+        count = task_instance.delete()
+        return Response({"data deleted successfully": count[0]}, status=status.HTTP_204_NO_CONTENT) 
+
+        
+        
